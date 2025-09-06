@@ -1,0 +1,5 @@
+{
+  "name": "Gerador de Jornada de Estudos",
+  "description": "Uma aplicação que seleciona pastas locais e usa a API Gemini para gerar uma jornada de estudos gamificada, completa com níveis, pontos e quizzes.",
+  "requestFramePermissions": []
+}
