@@ -21,11 +21,10 @@ export const FolderSelector: React.FC<FolderSelectorProps> = ({ onFilesSelected,
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-gray-900 min-h-[calc(100vh-150px)]">
+    <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-gray-900 min-h-[calc(100vh-150px)] animate-fade-in-up">
         <div className="max-w-2xl">
-            <h2 className="text-4xl font-bold text-green-400 mb-4">Inicie sua Missão de Estudo</h2>
             <p className="text-gray-400 mb-8 text-lg">
-                A estrutura ideal é: <strong className="text-green-300">Jornada / Missão / Tarefa</strong>.
+                A estrutura ideal é: <strong className="text-yellow-300">Jornada / Missão / Tarefa</strong>.
                 Cada <strong className="text-yellow-300">pasta de primeiro nível</strong> é uma Jornada. Dentro dela, cada <strong className="text-yellow-300">subpasta numerada</strong> é uma Missão. Selecione o diretório raiz com todas as suas Jornadas.
             </p>
             <input
@@ -39,7 +38,7 @@ export const FolderSelector: React.FC<FolderSelectorProps> = ({ onFilesSelected,
             <button
                 onClick={handleFolderSelectClick}
                 disabled={isLoading}
-                className="w-full px-8 py-4 bg-green-500 text-gray-900 font-bold rounded-lg hover:bg-green-600 transition-all duration-300 transform hover:scale-105 disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center justify-center text-xl"
+                className="w-full px-8 py-4 bg-yellow-500 text-gray-900 font-bold rounded-lg hover:bg-yellow-600 transition-all duration-300 transform hover:scale-105 disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center justify-center text-xl"
             >
                 {isLoading ? (
                     <>

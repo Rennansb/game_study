@@ -1,9 +1,19 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-g">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Missão de Estudo</title>
+    <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.17.0",
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+        "react/": "https://aistudiocdn.com/react@^19.1.1/",
+        "react": "https://aistudiocdn.com/react@^19.1.1"
+      }
+    }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @keyframes fade-in {
@@ -15,73 +25,117 @@
             to { opacity: 1; transform: translateY(0); }
         }
         @keyframes pulse-strong {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(4, 255, 155, 0.7); }
-            50% { transform: scale(1.05); box-shadow: 0 0 20px 10px rgba(4, 255, 155, 0); }
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(212, 160, 23, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px 10px rgba(212, 160, 23, 0); }
         }
         @keyframes scoreUpdate {
             0%, 100% { transform: scale(1); color: #fff; }
-            50% { transform: scale(1.2); color: #4ade80; }
+            50% { transform: scale(1.2); color: #f0b90b; }
         }
         @keyframes unlock {
             0% { transform: scale(0.9); filter: grayscale(100%); opacity: 0.5; }
-            50% { transform: scale(1.1); filter: grayscale(50%); opacity: 0.75; box-shadow: 0 0 30px #4ade80; }
+            50% { transform: scale(1.1); filter: grayscale(50%); opacity: 0.75; box-shadow: 0 0 30px #f0b90b; }
             100% { transform: scale(1); filter: grayscale(0%); opacity: 1; }
         }
-        @keyframes card-flip-in {
-            from {
-                transform: perspective(1000px) rotateY(90deg);
-                opacity: 0;
-            }
-            to {
-                transform: perspective(1000px) rotateY(0deg);
-                opacity: 1;
-            }
+        @keyframes fade-in-out {
+            0%, 100% { opacity: 0; transform: translateY(20px); }
+            10%, 90% { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
         .animate-fade-in-up { animation: fade-in-up 0.5s ease-out forwards; }
         .animate-pulse-strong { animation: pulse-strong 1.5s infinite; }
         .animate-scoreUpdate { animation: scoreUpdate 0.6s ease-in-out; }
         .animate-unlock { animation: unlock 0.8s ease-out forwards; }
-        .animate-card-flip-in { animation: card-flip-in 0.6s ease-out backwards; }
-
-
-        /* Character Animations */
+        .animate-save-notification { animation: fade-in-out 3s ease-in-out forwards; }
+        
         #character-svg { transition: transform 0.3s ease-in-out; }
-        .character-idle #body, .character-idle #head { animation: breath 4s ease-in-out infinite; }
-        .character-thinking #head { transform: translateY(2px) rotate(-5deg); }
-        .character-thinking #right-arm { transform: rotate(-15deg); }
-        .character-success #right-arm { animation: slash 0.5s ease-out forwards; }
-        .character-fail #head { animation: shake-head 0.5s ease-in-out; }
+        .character-idle #body { animation: idle-bounce 1.8s ease-in-out infinite; }
+        .character-idle #head { animation: idle-head-bob 1.8s ease-in-out infinite 0.1s; }
+        .character-idle #left-eye, .character-idle #right-eye { animation: idle-blink 4s ease-in-out infinite; }
+        .character-moving #main-group { animation: run-bob 0.4s ease-in-out infinite; }
+        .character-moving #left-arm { animation: run-arm 0.4s ease-in-out infinite; }
+        .character-moving #right-arm { animation: run-arm 0.4s ease-in-out infinite reverse; }
+        .character-moving #left-leg { animation: run-leg 0.4s ease-in-out infinite reverse; }
+        .character-moving #right-leg { animation: run-leg 0.4s ease-in-out infinite; }
+        .character-thinking #head { transform: translateY(1px) rotate(-5deg); }
+        .character-thinking #right-arm { animation: think-scratch 2s ease-in-out infinite; }
+        .character-thinking #mouth { d: path("M 37 38 Q 40 37, 43 38"); }
+        .character-success #main-group { animation: success-jump 0.5s ease-out forwards; transform-origin: center bottom; }
+        .character-success #mouth { d: path("M 36 37 C 38 41, 42 41, 44 37"); }
+        .character-success #right-eye { animation: wink 1s ease-in-out forwards; }
+        .character-success #right-arm { animation: success-arm-wave 0.8s ease-in-out forwards; }
+        .character-success #thumbs-up { display: block; }
+        .character-success #default-hand { display: none; }
+        .character-fail #body { transform: translateY(3px); }
+        .character-fail #head { transform: rotate(-10deg) translateY(2px); }
+        .character-fail #mouth { d: path("M 37 40 Q 40 37, 43 40"); }
 
-        @keyframes breath {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-2px); }
+        @keyframes idle-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+        @keyframes idle-head-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
+        @keyframes idle-blink { 0%, 95%, 100% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } }
+        @keyframes wink { 0%, 30%, 60%, 100% { transform: scaleY(1); } 45% { transform: scaleY(0.1); } }
+        @keyframes success-arm-wave { 0% { transform: rotate(0deg); } 50% { transform: rotate(-25deg); } 100% { transform: rotate(5deg); } }
+        @keyframes run-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes run-arm { 0%, 100% { transform: rotate(45deg); } 50% { transform: rotate(-45deg); } }
+        @keyframes run-leg { 0%, 100% { transform: rotate(35deg); } 50% { transform: rotate(-35deg); } }
+        @keyframes think-scratch { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-25deg) translateY(-2px); } }
+        @keyframes success-jump { 0% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-25px) rotate(-10deg); } 100% { transform: translateY(0) rotate(0); } }
+
+        .game-map-background {
+            background-color: #eaddc7;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 800'%3E%3Cdefs%3E%3Cfilter id='paper' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.03' numOctaves='5' result='noise'/%3E%3CfeDiffuseLighting in='noise' lighting-color='%23d3c5af' surfaceScale='2'%3E%3CfeDistantLight azimuth='45' elevation='60'/%3E%3C/feDiffuseLighting%3E%3C/filter%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='%23d3c5af'/%3E%3Crect width='100%25' height='100%25' filter='url(%23paper)' opacity='0.7'/%3E%3Cg fill='%23a2b39b' opacity='0.6'%3E%3Cpath d='M-50 150 C 50 100, 150 200, 250 150 C 350 100, 400 250, 500 200 L 550 300 L 200 350 L -50 250 Z'/%3E%3Cpath d='M900 650 C 950 600, 1050 700, 1150 650 C 1250 600, 1300 750, 1200 800 L 900 800 Z'/%3E%3Ccircle cx='800' cy='100' r='50'/%3E%3Ccircle cx='830' cy='120' r='60'/%3E%3Ccircle cx='780' cy='130' r='55'/%3E%3C/g%3E%3Cg fill='%236b8a6a' opacity='0.7'%3E%3Cpath d='M1100 0 C 1000 100, 1150 200, 1200 150 L 1200 0 Z' /%3E%3Cpath d='M0 800 C 100 700, -50 600, 0 550 L 0 800 Z'/%3E%3C/g%3E%3Cg fill='%23a1bde0' opacity='0.5' stroke='%2389a4c7' stroke-width='2'%3E%3Cpath d='M600 0 C 400 200, 500 400, 400 600 C 300 800, 600 700, 700 500 C 800 300, 700 100, 600 0 Z'/%3E%3Cpath d='M1000 250 C 900 350, 950 500, 1100 550' fill='none' stroke-width='8'/%3E%3C/g%3E%3Cg fill='%23a48a79' opacity='0.5'%3E%3Cpath d='M150,800 C 250,700 350,750 450,650 L 500,800 Z'/%3E%3Cpath d='M-10,10 C 50,50 150,0 200,50 L 220, -10 Z' /%3E%3Cpath d='M600,450 C 650,400 750,420 800,500 C 850,580 700,600 650,550 Z'/%3E%3C/g%3E%3C/svg%3E");
+            background-size: cover;
+            border: 10px solid transparent;
+            border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Crect width='30' height='30' fill='%236b5a4d'/%3E%3Cpolyline points='5,5 25,5 25,25 5,25 5,5' stroke='%23d4a017' stroke-width='1' fill='none'/%3E%3Ccircle cx='5' cy='5' r='1' fill='%23d4a017'/%3E%3Ccircle cx='25' cy='5' r='1' fill='%23d4a017'/%3E%3Ccircle cx='5' cy='25' r='1' fill='%23d4a017'/%3E%3Ccircle cx='25' cy='25' r='1' fill='%23d4a017'/%3E%3C/svg%3E") 10;
+            box-shadow: inset 0 0 25px rgba(0,0,0,0.4), 0 0 15px rgba(0,0,0,0.3);
+            position: relative;
+            filter: brightness(0.9);
         }
-        @keyframes slash {
-            0% { transform: rotate(0); }
-            50% { transform: rotate(-100deg) translateX(-20px); }
-            100% { transform: rotate(0); }
+
+        #thumbs-up {
+            display: none;
         }
-        @keyframes shake-head {
-            0%, 100% { transform: rotate(0); }
-            25% { transform: rotate(-8deg); }
-            75% { transform: rotate(8deg); }
+
+        .map-path {
+            position: absolute;
+            background-image: linear-gradient(to right, #6b5a4d 50%, transparent 0%);
+            background-size: 15px 3px;
+            background-repeat: repeat-x;
+            height: 3px;
+            z-index: 5;
+            transform-origin: left center;
         }
+        .mission-tree-path {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 4px;
+            transform: translateX(-50%);
+            background-image: linear-gradient(to bottom, #6b5a4d 50%, transparent 0%);
+            background-size: 4px 15px;
+            background-repeat: repeat-y;
+            z-index: 1;
+        }
+
+        .mission-branch-path {
+            position: absolute;
+            background-image: linear-gradient(to right, #6b5a4d 50%, transparent 0%);
+            background-size: 12px 2px;
+            background-repeat: repeat-x;
+            height: 2px;
+            z-index: 1;
+        }
+
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.5s ease-out;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
     </style>
 </head>
-<body class="bg-gray-900 overflow-x-hidden relative">
-    <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%224%22%20height%3D%224%22%20viewBox%3D%220%200%204%204%22%3E%3Cpath%20fill%3D%22%23047857%22%20fill-opacity%3D%220.1%22%20d%3D%22M0%200h2v2H0V0zm2%202h2v2H2V2z%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E')] opacity-20"></div>
+<body class="bg-gray-900 text-gray-200">
     <div id="root"></div>
-    <script type="importmap">
-    {
-      "imports": {
-        "react": "https://aistudiocdn.com/react@^19.1.1",
-        "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
-        "react/": "https://aistudiocdn.com/react@^19.1.1/",
-        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.17.0"
-      }
-    }
-    </script>
-    <script type="module" src="./index.tsx"></script>
+    <script type="module" src="/index.tsx"></script>
 </body>
 </html>

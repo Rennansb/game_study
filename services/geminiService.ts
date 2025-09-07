@@ -57,3 +57,31 @@ export const generateQuizFromTitles = async (journeyTitle: string, missionTitle:
         return null;
     }
 };
+
+export const generateMissionSummary = async (journeyTitle: string, missionTitle: string, taskTitles: string[]): Promise<string> => {
+    try {
+        const prompt = `
+            Você é um tutor de programação experiente e amigável.
+            Baseado na jornada de estudos '${journeyTitle}', na missão '${missionTitle}', e nas tarefas concluídas (${taskTitles.join(', ')}), gere um resumo conciso e encorajador em português do Brasil.
+            O resumo deve focar nos principais conceitos e habilidades que o usuário aprendeu.
+            
+            Siga esta estrutura:
+            1. Comece com uma frase de parabenização vibrante pela conclusão da missão.
+            2. Apresente 3 ou 4 dos aprendizados mais importantes em formato de lista (bullet points com "-").
+            3. Termine com uma frase motivacional curta para a próxima missão.
+            
+            Não inclua a formatação markdown. A resposta deve ser um texto simples.
+        `;
+
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+        });
+
+        return response.text;
+
+    } catch (error) {
+        console.error("Error generating mission summary with Gemini API:", error);
+        return "Não foi possível gerar o resumo da missão. Mas parabéns por completá-la! Continue assim.";
+    }
+};

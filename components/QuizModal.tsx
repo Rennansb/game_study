@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Quiz } from '../types';
 
-interface QuizModalProps {
-  quiz: Quiz;
+interface QuizViewProps {
+  quiz: Quiz | null;
   missionTitle: string;
-  onClose: () => void;
+  isLoading: boolean;
+  onCancel: () => void;
   onSubmit: (answer: string) => void;
 }
 
-export const QuizModal: React.FC<QuizModalProps> = ({ quiz, missionTitle, onClose, onSubmit }) => {
+export const QuizView: React.FC<QuizViewProps> = ({ quiz, missionTitle, isLoading, onCancel, onSubmit }) => {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -16,6 +17,19 @@ export const QuizModal: React.FC<QuizModalProps> = ({ quiz, missionTitle, onClos
     setSelectedAnswer(null);
     setIsSubmitted(false);
   }, [quiz]);
+
+  if (isLoading || !quiz) {
+    return (
+        <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
+            <svg className="animate-spin h-10 w-10 text-yellow-400 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <h2 className="text-2xl font-bold text-yellow-400">Criando seu Desafio...</h2>
+            <p className="text-gray-400">O mestre está forjando uma pergunta digna de sua habilidade.</p>
+        </div>
+    )
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,15 +44,15 @@ export const QuizModal: React.FC<QuizModalProps> = ({ quiz, missionTitle, onClos
   const getOptionClass = (option: string) => {
     if (!isSubmitted) {
       return selectedAnswer === option
-        ? 'bg-green-900/50 border-green-500'
-        : 'bg-gray-900 border-gray-700 hover:border-green-600';
+        ? 'bg-yellow-900/50 border-yellow-500'
+        : 'bg-gray-900 border-gray-700 hover:border-yellow-600';
     }
 
     const isCorrect = option === quiz.correctAnswer;
     const isSelected = option === selectedAnswer;
 
     if (isCorrect) {
-      return 'bg-green-500/80 border-green-400 animate-pulse'; // Correct answer
+      return 'bg-teal-500/80 border-teal-400 animate-pulse'; // Correct answer
     }
     if (isSelected && !isCorrect) {
       return 'bg-red-500/80 border-red-400'; // Selected and wrong
@@ -47,14 +61,13 @@ export const QuizModal: React.FC<QuizModalProps> = ({ quiz, missionTitle, onClos
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 border border-green-500/50 rounded-lg shadow-lg w-full max-w-2xl animate-fade-in">
-        <div className="p-6 border-b border-gray-700">
-          <h2 className="text-2xl font-bold text-green-400">Desafio da Missão: <span className="text-white">{missionTitle}</span></h2>
+    <div className="w-full max-w-3xl mx-auto animate-fade-in">
+        <div className="p-6 border-b border-gray-700 text-center">
+          <h2 className="text-2xl font-bold text-yellow-400">Desafio da Missão: <span className="text-white">{missionTitle}</span></h2>
         </div>
         <form onSubmit={handleSubmit}>
           <div className="p-6">
-            <p className="text-white text-xl mb-6">{quiz.question}</p>
+            <p className="text-white text-xl mb-6 text-center">{quiz.question}</p>
             <fieldset disabled={isSubmitted} className="space-y-3">
               {quiz.options.map((option, index) => (
                 <label
@@ -67,7 +80,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({ quiz, missionTitle, onClos
                     value={option}
                     checked={selectedAnswer === option}
                     onChange={() => setSelectedAnswer(option)}
-                    className="h-4 w-4 text-green-500 bg-gray-700 border-gray-600 focus:ring-green-600"
+                    className="h-4 w-4 text-yellow-500 bg-gray-700 border-gray-600 focus:ring-yellow-600"
                     disabled={isSubmitted}
                   />
                   <span className="ml-3 text-white text-lg">{option}</span>
@@ -76,15 +89,15 @@ export const QuizModal: React.FC<QuizModalProps> = ({ quiz, missionTitle, onClos
             </fieldset>
             {isSubmitted && (
                 <div className="mt-4 p-4 bg-gray-900/70 rounded-md border border-gray-700">
-                    <p className="text-sm text-green-300 font-bold">Explicação:</p>
+                    <p className="text-sm text-yellow-300 font-bold">Explicação:</p>
                     <p className="text-gray-300">{quiz.explanation}</p>
                 </div>
             )}
           </div>
-          <div className="p-4 bg-gray-900/50 rounded-b-lg flex justify-end items-center space-x-4">
+          <div className="p-4 flex justify-center items-center space-x-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={onCancel}
               disabled={isSubmitted}
               className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white disabled:opacity-50"
             >
@@ -93,13 +106,12 @@ export const QuizModal: React.FC<QuizModalProps> = ({ quiz, missionTitle, onClos
             <button
               type="submit"
               disabled={!selectedAnswer || isSubmitted}
-              className="px-6 py-2 text-sm font-medium rounded-md text-gray-900 bg-green-400 hover:bg-green-500 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors duration-300"
+              className="px-6 py-2 text-sm font-medium rounded-md text-gray-900 bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors duration-300"
             >
               {isSubmitted ? 'Verificando...' : 'Enviar Resposta'}
             </button>
           </div>
         </form>
-      </div>
     </div>
   );
 };

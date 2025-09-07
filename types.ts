@@ -34,4 +34,5 @@ export interface PlayerStats {
   lives: number;
 }
 
-export type CharacterState = 'idle' | 'thinking' | 'success' | 'fail';
+export type CharacterState = 'idle' | 'thinking' | 'success' | 'fail' | 'moving';
+export type AppView = 'journeys' | 'missions' | 'tasks' | 'quiz' | 'summary' | 'game_over';
