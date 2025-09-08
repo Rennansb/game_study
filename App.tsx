@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Journey, Mission, Task, Quiz, PlayerStats as PlayerStatsType, CharacterState, AppView, MissionStatus } from './types';
-import { FolderSelector } from './components/FolderSelector';
+import { WelcomeScreen } from './components/WelcomeScreen';
 import { JourneyMap } from './components/StudyJourney';
 import { TaskView } from './components/MissionDetailModal';
 import { MissionMap } from './components/JourneyDetailModal';
 import { QuizView } from './components/QuizModal';
 import { PlayerStats } from './components/PlayerStats';
-import { CharacterGuide } from './components/CharacterGuide';
+import { CharacterGuide, CharacterSVG } from './components/CharacterGuide';
 import { MissionSummary } from './components/MissionSummary';
 import { generateQuizFromTitles, generateMissionSummary } from './services/geminiService';
 
@@ -133,8 +133,6 @@ const App: React.FC = () => {
                     setPlayerStats(savedStats);
                     showCharacterMessage('Bem-vindo de volta! Continue de onde parou.', 'idle', 5000);
                 }
-            } else {
-                showCharacterMessage('Olá, herói do código! Estou aqui para guiar sua jornada. Selecione sua pasta de estudos para começarmos.', 'idle', 6000);
             }
         } catch (error) {
             console.error("Failed to load progress:", error);
@@ -207,7 +205,6 @@ const App: React.FC = () => {
     
     const handleFilesSelected = (files: File[]) => {
         setIsLoading(true);
-        showCharacterMessage("Analisando seus pergaminhos de estudo... Um momento, jovem herói.", 'thinking');
         setTimeout(() => {
             const structuredData = processFiles(files);
             setJourneys(structuredData);
@@ -404,12 +401,18 @@ const App: React.FC = () => {
         }
     }, [journeys, selectedJourney]);
 
+    const handleRetryFromGameOver = () => {
+        const newStats = { ...playerStats, lives: INITIAL_STATS.lives };
+        setPlayerStats(newStats);
+        saveProgress(journeys, newStats);
+        setView('missions');
+    };
 
     const levelUpScore = playerStats.level * SCORE_TO_LEVEL_UP;
 
     const renderContent = () => {
         if (journeys.length === 0) {
-            return <FolderSelector onFilesSelected={handleFilesSelected} isLoading={isLoading} />;
+            return <WelcomeScreen onFilesSelected={handleFilesSelected} isLoading={isLoading} />;
         }
         switch(view) {
             case 'journeys':
@@ -452,14 +455,28 @@ const App: React.FC = () => {
                 if (!missionForQuiz) { setView('missions'); return null; }
                 return <MissionSummary
                             missionTitle={missionForQuiz.title}
+                            // FIX: Use missionSummary state variable
                             summary={missionSummary}
                             onFinish={handleFinishMission}
                         />;
             case 'game_over':
                 return (
-                    <div className="text-center p-4">
-                        <h1 className="text-5xl font-bold text-red-500 mb-4">Fim de Jogo</h1>
-                        <p className="text-xl text-gray-300 mb-8">Você ficou sem vidas. Atualize a página para recomeçar sua jornada.</p>
+                    <div className="min-h-[75vh] flex flex-col items-center justify-center text-center p-4 animate-screen-shake">
+                        <div className="mb-[-2rem] z-10">
+                            <CharacterSVG charState="fail" className="w-48 h-48 drop-shadow-lg" />
+                        </div>
+                        <div className="bg-gray-800/50 border-2 border-red-900/50 rounded-lg shadow-2xl shadow-red-900/20 p-8 pt-12 relative text-center">
+                            <h1 className="text-7xl font-medieval text-red-500 mb-4 animate-crack-in">Fim de Jogo</h1>
+                            <p className="text-xl text-gray-300 mb-8 max-w-lg">
+                                Você ficou sem vidas. Mas a jornada de um herói é feita de superação.
+                            </p>
+                            <button
+                                onClick={handleRetryFromGameOver}
+                                className="mt-4 px-10 py-5 bg-yellow-500 text-gray-900 font-bold text-lg rounded-lg hover:bg-yellow-600 transition-all duration-300 transform hover:scale-105 animate-pulse-strong"
+                            >
+                                Tentar Novamente
+                            </button>
+                        </div>
                     </div>
                 );
             default:
@@ -475,15 +492,13 @@ const App: React.FC = () => {
 // Fix: Reconstruct the return statement to fix UI bug and add missing export.
     return (
         <main className="bg-gray-900 text-white min-h-screen">
-             {journeys.length === 0 && view !== 'motivational' ? (
-                 <div className="text-center pt-8">
-                    <h1 className="text-5xl font-bold text-yellow-400">Study Journey</h1>
-                 </div>
-             ) : (
+             {journeys.length > 0 && view !== 'motivational' && (
                  <PlayerStats stats={playerStats} levelUpScore={levelUpScore} onChangeCourse={handleChangeCourse} />
              )}
             
-            <CharacterGuide message={characterMessage} isVisible={isCharacterVisible} state={characterState} />
+            {journeys.length > 0 && (
+                <CharacterGuide message={characterMessage} isVisible={isCharacterVisible} state={characterState} />
+            )}
 
             <div className="container mx-auto px-4 py-8">
                 {renderContent()}
