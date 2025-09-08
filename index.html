@@ -16,6 +16,10 @@
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
+        
+        .font-medieval { font-family: 'MedievalSharp', cursive; }
+
         @keyframes fade-in {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -41,22 +45,28 @@
             0%, 100% { opacity: 0; transform: translateY(20px); }
             10%, 90% { opacity: 1; transform: translateY(0); }
         }
+        @keyframes glow {
+            0%, 100% { filter: drop-shadow(0 0 5px #f0b90b); }
+            50% { filter: drop-shadow(0 0 15px #f5d042); }
+        }
         .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
         .animate-fade-in-up { animation: fade-in-up 0.5s ease-out forwards; }
         .animate-pulse-strong { animation: pulse-strong 1.5s infinite; }
         .animate-scoreUpdate { animation: scoreUpdate 0.6s ease-in-out; }
         .animate-unlock { animation: unlock 0.8s ease-out forwards; }
         .animate-save-notification { animation: fade-in-out 3s ease-in-out forwards; }
+        .animate-glow { animation: glow 2s ease-in-out infinite; }
         
         #character-svg { transition: transform 0.3s ease-in-out; }
         .character-idle #body { animation: idle-bounce 1.8s ease-in-out infinite; }
         .character-idle #head { animation: idle-head-bob 1.8s ease-in-out infinite 0.1s; }
         .character-idle #left-eye, .character-idle #right-eye { animation: idle-blink 4s ease-in-out infinite; }
-        .character-moving #main-group { animation: run-bob 0.4s ease-in-out infinite; }
-        .character-moving #left-arm { animation: run-arm 0.4s ease-in-out infinite; }
-        .character-moving #right-arm { animation: run-arm 0.4s ease-in-out infinite reverse; }
-        .character-moving #left-leg { animation: run-leg 0.4s ease-in-out infinite reverse; }
-        .character-moving #right-leg { animation: run-leg 0.4s ease-in-out infinite; }
+        .character-idle #left-arm { transform: rotate(5deg); } /* Hold sword steady */
+        .character-moving #main-group { animation: walk-bob 0.8s ease-in-out infinite; }
+        .character-moving #right-arm { animation: walk-arm 0.8s ease-in-out infinite; }
+        .character-moving #left-arm { animation: hold-sword-arm 0.8s ease-in-out infinite; } /* Hold sword steady */
+        .character-moving #left-leg { animation: walk-leg 0.8s ease-in-out infinite reverse; }
+        .character-moving #right-leg { animation: walk-leg 0.8s ease-in-out infinite; }
         .character-thinking #head { transform: translateY(1px) rotate(-5deg); }
         .character-thinking #right-arm { animation: think-scratch 2s ease-in-out infinite; }
         .character-thinking #mouth { d: path("M 37 38 Q 40 37, 43 38"); }
@@ -67,75 +77,164 @@
         .character-success #thumbs-up { display: block; }
         .character-success #default-hand { display: none; }
         .character-fail #body { transform: translateY(3px); }
-        .character-fail #head { transform: rotate(-10deg) translateY(2px); }
+        .character-fail #head { animation: fail-shake 0.4s ease-in-out forwards; transform: translateY(2px); }
         .character-fail #mouth { d: path("M 37 40 Q 40 37, 43 40"); }
+        .character-salute #right-arm { animation: salute-arm 1.2s ease-in-out forwards; }
+        .character-salute #left-arm { transform: rotate(5deg); } /* Hold sword steady */
 
         @keyframes idle-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
         @keyframes idle-head-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
         @keyframes idle-blink { 0%, 95%, 100% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } }
         @keyframes wink { 0%, 30%, 60%, 100% { transform: scaleY(1); } 45% { transform: scaleY(0.1); } }
         @keyframes success-arm-wave { 0% { transform: rotate(0deg); } 50% { transform: rotate(-25deg); } 100% { transform: rotate(5deg); } }
-        @keyframes run-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-        @keyframes run-arm { 0%, 100% { transform: rotate(45deg); } 50% { transform: rotate(-45deg); } }
-        @keyframes run-leg { 0%, 100% { transform: rotate(35deg); } 50% { transform: rotate(-35deg); } }
+        @keyframes walk-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+        @keyframes walk-arm { 0%, 100% { transform: rotate(20deg); } 50% { transform: rotate(-20deg); } }
+        @keyframes walk-leg { 0%, 100% { transform: rotate(15deg); } 50% { transform: rotate(-15deg); } }
         @keyframes think-scratch { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-25deg) translateY(-2px); } }
-        @keyframes success-jump { 0% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-25px) rotate(-10deg); } 100% { transform: translateY(0) rotate(0); } }
+        @keyframes success-jump { 0% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-25px) rotate(-10deg); } 100% { translateY(0) rotate(0); } }
+        @keyframes fail-shake { 0%, 100% { transform: translateX(0) rotate(-10deg); } 25% { transform: translateX(-3px) rotate(-12deg); } 75% { transform: translateX(3px) rotate(-8deg); } }
+        @keyframes salute-arm { 0% { transform: rotate(0deg); } 40% { transform: rotate(-145deg) translateX(5px) translateY(-5px); } 60% { transform: rotate(-145deg) translateX(5px) translateY(-5px); } 100% { transform: rotate(0deg); } }
+        @keyframes hold-sword-arm { 0%, 100% { transform: rotate(8deg); } 50% { transform: rotate(2deg); } }
 
         .game-map-background {
             background-color: #eaddc7;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 800'%3E%3Cdefs%3E%3Cfilter id='paper' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.03' numOctaves='5' result='noise'/%3E%3CfeDiffuseLighting in='noise' lighting-color='%23d3c5af' surfaceScale='2'%3E%3CfeDistantLight azimuth='45' elevation='60'/%3E%3C/feDiffuseLighting%3E%3C/filter%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='%23d3c5af'/%3E%3Crect width='100%25' height='100%25' filter='url(%23paper)' opacity='0.7'/%3E%3Cg fill='%23a2b39b' opacity='0.6'%3E%3Cpath d='M-50 150 C 50 100, 150 200, 250 150 C 350 100, 400 250, 500 200 L 550 300 L 200 350 L -50 250 Z'/%3E%3Cpath d='M900 650 C 950 600, 1050 700, 1150 650 C 1250 600, 1300 750, 1200 800 L 900 800 Z'/%3E%3Ccircle cx='800' cy='100' r='50'/%3E%3Ccircle cx='830' cy='120' r='60'/%3E%3Ccircle cx='780' cy='130' r='55'/%3E%3C/g%3E%3Cg fill='%236b8a6a' opacity='0.7'%3E%3Cpath d='M1100 0 C 1000 100, 1150 200, 1200 150 L 1200 0 Z' /%3E%3Cpath d='M0 800 C 100 700, -50 600, 0 550 L 0 800 Z'/%3E%3C/g%3E%3Cg fill='%23a1bde0' opacity='0.5' stroke='%2389a4c7' stroke-width='2'%3E%3Cpath d='M600 0 C 400 200, 500 400, 400 600 C 300 800, 600 700, 700 500 C 800 300, 700 100, 600 0 Z'/%3E%3Cpath d='M1000 250 C 900 350, 950 500, 1100 550' fill='none' stroke-width='8'/%3E%3C/g%3E%3Cg fill='%23a48a79' opacity='0.5'%3E%3Cpath d='M150,800 C 250,700 350,750 450,650 L 500,800 Z'/%3E%3Cpath d='M-10,10 C 50,50 150,0 200,50 L 220, -10 Z' /%3E%3Cpath d='M600,450 C 650,400 750,420 800,500 C 850,580 700,600 650,550 Z'/%3E%3C/g%3E%3C/svg%3E");
-            background-size: cover;
-            border: 10px solid transparent;
-            border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Crect width='30' height='30' fill='%236b5a4d'/%3E%3Cpolyline points='5,5 25,5 25,25 5,25 5,5' stroke='%23d4a017' stroke-width='1' fill='none'/%3E%3Ccircle cx='5' cy='5' r='1' fill='%23d4a017'/%3E%3Ccircle cx='25' cy='5' r='1' fill='%23d4a017'/%3E%3Ccircle cx='5' cy='25' r='1' fill='%23d4a017'/%3E%3Ccircle cx='25' cy='25' r='1' fill='%23d4a017'/%3E%3C/svg%3E") 10;
-            box-shadow: inset 0 0 25px rgba(0,0,0,0.4), 0 0 15px rgba(0,0,0,0.3);
-            position: relative;
-            filter: brightness(0.9);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 800'%3E%3Cdefs%3E%3Cfilter id='paper' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.04' numOctaves='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='100%25' height='100%25' filter='url(%23paper)'/%3E%3C/svg%3E");
         }
-
-        #thumbs-up {
-            display: none;
-        }
-
         .map-path {
             position: absolute;
-            background-image: linear-gradient(to right, #6b5a4d 50%, transparent 0%);
-            background-size: 15px 3px;
-            background-repeat: repeat-x;
-            height: 3px;
-            z-index: 5;
-            transform-origin: left center;
+            height: 4px;
+            background: repeating-linear-gradient(90deg, #78350f, #78350f 10px, transparent 10px, transparent 20px);
+            transform-origin: 0 50%;
+            z-index: 10;
         }
-        .mission-tree-path {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            width: 4px;
-            transform: translateX(-50%);
-            background-image: linear-gradient(to bottom, #6b5a4d 50%, transparent 0%);
-            background-size: 4px 15px;
-            background-repeat: repeat-y;
-            z-index: 1;
+        .castle-interior-background {
+            background-color: #27272a;
+            background-image:
+                linear-gradient(rgba(0, 0, 0, 0.5) 2px, transparent 2px),
+                linear-gradient(90deg, rgba(0, 0, 0, 0.5) 2px, transparent 2px),
+                linear-gradient(rgba(0, 0, 0, 0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 0, 0, 0.3) 1px, transparent 1px);
+            background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+            background-position: -2px -2px, -2px -2px, -1px -1px, -1px -1px;
+            border: 10px solid #3f3f46;
         }
 
-        .mission-branch-path {
-            position: absolute;
-            background-image: linear-gradient(to right, #6b5a4d 50%, transparent 0%);
-            background-size: 12px 2px;
-            background-repeat: repeat-x;
-            height: 2px;
-            z-index: 1;
+        .door-frame { transform-style: preserve-3d; perspective: 1000px; }
+        .door { transform-origin: left; transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
+        .door-open .door { transform: rotateY(-110deg); }
+
+        .flicker { animation: flicker 2s infinite; }
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        .torch-flame { animation: flicker 1.5s ease-in-out infinite; }
+        @keyframes torch-glow {
+            0%, 100% { filter: drop-shadow(0 0 35px rgba(245, 158, 11, 0.9)); }
+            50% { filter: drop-shadow(0 0 50px rgba(250, 204, 21, 1)); }
+        }
+        .torch-glow { animation: torch-glow 2.5s ease-in-out infinite; }
+        
+        .guard-defeated { animation: fade-in 0.5s; }
+
+        @keyframes guard-idle-1 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2px)} .guard-head{transform:rotate(-2deg)} }
+        @keyframes guard-idle-2 { 0%,100%{transform:rotate(0)} 50%{transform:rotate(1deg)} .guard-spear{transform:rotate(-1deg)} }
+        @keyframes guard-idle-3 { 0%,100%{ .guard-head{transform:rotate(0)} } 50%{ .guard-head{transform:rotate(3deg) translateX(1px)} } }
+        @keyframes guard-idle-4 { 0%,100%{ .guard-right-arm{transform:rotate(0)} } 50%{ .guard-right-arm{transform:rotate(-5deg)} } }
+        @keyframes guard-idle-5 { 0%,100%{ .guard-body-group{transform:translateX(0)} } 50%{ .guard-body-group{transform:translateX(1px)} } }
+        @keyframes guard-idle-6 { 0%,100%{ .guard-head{transform:rotate(0)} } 25%{ .guard-head{transform:rotate(-3deg)} } 75%{ .guard-head{transform:rotate(2deg)} } }
+        @keyframes guard-idle-7 { 0%,100%{transform:translateY(0)} 20%{transform:translateY(-3px)} 40%{transform:translateY(0)} 60%{transform:translateY(-1px)} 80%{transform:translateY(0)} }
+        @keyframes guard-idle-8 { 0%,100%{ .guard-spear{transform:rotate(0)} } 50%{ .guard-spear{transform:rotate(2deg) translateY(-2px)} } }
+        @keyframes guard-idle-9 { 0%,100%{ .guard-helmet circle{opacity:1} } 50%{ .guard-helmet circle{opacity:0.5; transform:scale(0.8)} } }
+        @keyframes guard-idle-10{ 0%,100%{transform:scaleX(1)} 50%{transform:scaleX(1.02)} }
+
+        .guard-idle-1{animation:guard-idle-1 2.5s ease-in-out infinite}
+        .guard-idle-2{animation:guard-idle-2 3s ease-in-out infinite}
+        .guard-idle-3{animation:guard-idle-3 2.8s ease-in-out infinite}
+        .guard-idle-4{animation:guard-idle-4 2.2s ease-in-out infinite}
+        .guard-idle-5{animation:guard-idle-5 3.5s ease-in-out infinite}
+        .guard-idle-6{animation:guard-idle-6 4s ease-in-out infinite}
+        .guard-idle-7{animation:guard-idle-7 2s ease-in-out infinite}
+        .guard-idle-8{animation:guard-idle-8 3.2s ease-in-out infinite}
+        .guard-idle-9{animation:guard-idle-9 2.6s ease-in-out infinite}
+        .guard-idle-10{animation:guard-idle-10 3.8s ease-in-out infinite}
+
+        @keyframes sink-door {
+            from { transform: translateY(0); }
+            to { transform: translateY(100%); }
+        }
+        .door-sinking .stone-door { animation: sink-door 1s ease-in forwards; }
+
+        @keyframes level-up {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 #facc15; }
+            50% { transform: scale(1.5); box-shadow: 0 0 30px 15px #facc15; }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 #facc15; }
+        }
+        .animate-level-up { animation: level-up 1.2s ease-in-out; }
+        @keyframes heart-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .animate-heart-pulse { animation: heart-pulse 1.5s ease-in-out infinite; }
+
+        @keyframes dramatic-text-reveal {
+            0% { opacity: 0; transform: translateY(30px) scale(0.9); letter-spacing: 0.5em; }
+            70% { opacity: 1; transform: translateY(0) scale(1.05); letter-spacing: normal; }
+            100% { opacity: 1; transform: scale(1); letter-spacing: normal; }
+        }
+        
+        .character-slashing #main-group {
+             animation: dash-lunge 0.5s ease-out forwards;
+        }
+        .character-slashing #left-arm { /* Arm with sword */
+            animation: sword-arc-slash 0.5s ease-out forwards;
         }
 
-        .progress-ring__circle {
-            transition: stroke-dashoffset 0.5s ease-out;
-            transform: rotate(-90deg);
-            transform-origin: 50% 50%;
+        @keyframes dash-lunge {
+            0% { transform: translateX(10px) rotate(-5deg); }
+            100% { transform: translateX(0) rotate(0); }
+        }
+        @keyframes sword-arc-slash {
+            0% { transform: rotate(110deg) translate(10px, -20px); } /* Wind up */
+            60% { transform: rotate(-40deg) translate(-5px, 5px); } /* Slash */
+            100% { transform: rotate(10deg); } /* Follow through */
+        }
+        @keyframes draw-slash-path {
+            to { stroke-dashoffset: 0; }
         }
 
+        @keyframes checkbox-burn {
+            0% { opacity: 1; transform: scale(0.5); filter: url(#fire-effect); }
+            100% { opacity: 0; transform: scale(3); filter: url(#fire-effect); }
+        }
+        
+        @keyframes rune-glow {
+            0%, 100% { filter: drop-shadow(0 0 3px #f59e0b); opacity: 0.8; }
+            50% { filter: drop-shadow(0 0 8px #fef08a); opacity: 1; }
+        }
+        
+        .mission-scroll-background {
+            background-color: #f3e9d2;
+            background-image:
+                radial-gradient(circle at center, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 60%),
+                repeating-linear-gradient(to bottom, transparent, transparent 39px, #c8bda9 40px);
+            border: 10px solid #4a3f35;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-200">
+<body class="bg-gray-900">
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+    <svg style="display:none">
+      <defs>
+        <filter id="fire-effect">
+          <feTurbulence type="fractalNoise" baseFrequency="0.1 0.4" numOctaves="2" seed="2" result="turbulence"/>
+          <feDisplacementMap in2="turbulence" in="SourceGraphic" scale="10" xChannelSelector="R" yChannelSelector="G"/>
+          <feGaussianBlur stdDeviation="1.5" />
+          <feColorMatrix type="matrix" values="1 0 0 0 0, 0 1 0 0 0, 0 0 1 0 0, 0 0 0 20 -10"/>
+        </filter>
+      </defs>
+    </svg>
+    <script type="module" src="index.tsx"></script>
 </body>
 </html>

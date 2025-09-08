@@ -24,12 +24,6 @@ export const CharacterSVG: React.FC<{charState: CharacterState, className?: stri
           </pattern>
       </defs>
       <g id="main-group" transform="translate(0, 5)">
-          {/* -- Sword -- */}
-          <g id="sword" transform="translate(10, -5) rotate(15 50 40)">
-              <line x1="60" y1="20" x2="60" y2="55" stroke="#a1a1aa" strokeWidth="3" strokeLinecap="round" />
-              <rect x="56" y="55" width="8" height="3" fill="#4b5563" rx="1.5" />
-          </g>
-
           {/* -- Legs -- */}
           <g id="legs" style={{transformOrigin: '40px 60px'}}>
               <g id="right-leg" style={{transformOrigin: '45px 60px'}}>
@@ -60,7 +54,14 @@ export const CharacterSVG: React.FC<{charState: CharacterState, className?: stri
                         <path d="M 60 50 L 64 48" stroke="#991b1b" strokeWidth="0.5" fill="none" />
                     </g>
                   </g>
-                  <path id="left-arm" d="M 22 42 C 15 50, 15 58, 15 58" stroke="url(#checker)" strokeWidth="10" strokeLinecap="round" style={{transformOrigin: '22px 42px'}}/>
+                  {/* -- Left Arm & Sword -- */}
+                  <g id="left-arm" style={{transformOrigin: '22px 42px'}}>
+                      <path d="M 22 42 C 18 48, 18 55, 18 55" stroke="url(#checker)" strokeWidth="10" strokeLinecap="round" />
+                      <g id="sword" transform="translate(18, 55) rotate(100)">
+                          <line x1="0" y1="-25" x2="0" y2="10" stroke="#a1a1aa" strokeWidth="3" strokeLinecap="round" />
+                          <rect x="-4" y="10" width="8" height="3" fill="#4b5563" rx="1.5" />
+                      </g>
+                  </g>
                   
                   {/* -- Under Clothes & Belt -- */}
                   <rect x="30" y="38" width="20" height="25" fill="#4b5563" />

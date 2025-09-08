@@ -13,6 +13,81 @@ import { generateQuizFromTitles, generateMissionSummary } from './services/gemin
 const STORAGE_KEY = 'studyJourneyProgress';
 const INITIAL_STATS: PlayerStatsType = { score: 0, level: 1, lives: 3 };
 
+const motivationalMessages = [
+    "A jornada de mil linhas de código começa com um único caractere. Você está pronto.",
+    "Lembre-se: cada bug esmagado é uma vitória. Cada erro, uma lição. Continue firme.",
+    "Os maiores guerreiros do código não nasceram mestres. Eles se tornaram, linha por linha. Avance sem medo.",
+    "A escuridão antes da alvorada é apenas um teste. A luz do conhecimento espera por você. Não desista.",
+    "Dentro deste castelo, desafios se tornarão conquistas. Sua determinação é a chave mestra."
+];
+
+interface MotivationalScreenProps {
+    onComplete: () => void;
+}
+
+const MotivationalScreen: React.FC<MotivationalScreenProps> = ({ onComplete }) => {
+    const [message, setMessage] = useState('');
+    const [typedMessage, setTypedMessage] = useState('');
+    const [isTypingComplete, setIsTypingComplete] = useState(false);
+
+    useEffect(() => {
+        setMessage(motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)]);
+    }, []);
+
+    useEffect(() => {
+        if (!message) return;
+
+        setTypedMessage('');
+        setIsTypingComplete(false);
+        const typingInterval = setInterval(() => {
+            setTypedMessage(prev => {
+                if (prev.length < message.length) {
+                    return message.substring(0, prev.length + 1);
+                } else {
+                    clearInterval(typingInterval);
+                    setIsTypingComplete(true);
+                    return prev;
+                }
+            });
+        }, 50);
+
+        return () => clearInterval(typingInterval);
+    }, [message]);
+
+    return (
+        <div className="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center text-center p-8 animate-fade-in">
+            <h1 className="font-mono text-2xl md:text-3xl text-gray-200 leading-relaxed max-w-3xl">
+                {typedMessage}
+                {!isTypingComplete && <span className="animate-pulse">|</span>}
+            </h1>
+            {isTypingComplete && (
+                <button
+                    onClick={onComplete}
+                    className="mt-20 px-8 py-4 bg-yellow-500 text-gray-900 font-bold rounded-lg hover:bg-yellow-600 transition-all duration-300 transform hover:scale-105 animate-fade-in-up"
+                >
+                    Aceitar Desafio
+                </button>
+            )}
+        </div>
+    );
+};
+
+const MissionIntroScreen: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+    useEffect(() => {
+        const timer = setTimeout(onComplete, 2500); // Duration of the screen
+        return () => clearTimeout(timer);
+    }, [onComplete]);
+
+    return (
+        <div className="fixed inset-0 bg-black z-50 flex items-center justify-center animate-fade-in">
+            <h1 style={{ animation: 'dramatic-text-reveal 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards' }} className="text-6xl font-bold text-yellow-300 opacity-0">
+                PREPARA-SE
+            </h1>
+        </div>
+    );
+};
+
+
 const App: React.FC = () => {
     const [view, setView] = useState<AppView>('journeys');
     const [journeys, setJourneys] = useState<Journey[]>([]);
@@ -24,6 +99,7 @@ const App: React.FC = () => {
     const [missionForQuiz, setMissionForQuiz] = useState<Mission | null>(null);
     const [missionSummary, setMissionSummary] = useState('');
     const [missionJustCompleted, setMissionJustCompleted] = useState<string | null>(null);
+    const [isEnteringMissionMap, setIsEnteringMissionMap] = useState(false);
     
     const [characterState, setCharacterState] = useState<CharacterState>('idle');
     const [characterMessage, setCharacterMessage] = useState('');
@@ -158,12 +234,17 @@ const App: React.FC = () => {
 
     const handleJourneySelect = (journey: Journey) => {
         setSelectedJourney(journey);
+        setView('motivational');
+    };
+
+    const handleMotivationalComplete = () => {
+        setIsEnteringMissionMap(true);
         setView('missions');
     };
     
     const handleMissionSelect = (mission: Mission) => {
         setSelectedMission(mission);
-        setView('tasks');
+        setView('mission_intro');
     };
 
     const handleStartQuiz = (mission: Mission) => {
@@ -333,6 +414,8 @@ const App: React.FC = () => {
         switch(view) {
             case 'journeys':
                 return <JourneyMap journeys={journeys} onJourneySelect={handleJourneySelect} />;
+            case 'motivational':
+                return <MotivationalScreen onComplete={handleMotivationalComplete} />;
             case 'missions':
                  if (!selectedJourney) { setView('journeys'); return null; }
                 const currentJourneyState = journeys.find(j => j.id === selectedJourney.id) || selectedJourney;
@@ -342,7 +425,11 @@ const App: React.FC = () => {
                             onBack={() => setView('journeys')}
                             missionJustCompleted={missionJustCompleted}
                             onAnimationComplete={handleAnimationComplete}
+                            isInitialEntry={isEnteringMissionMap}
+                            onEntryAnimationComplete={() => setIsEnteringMissionMap(false)}
                         />;
+            case 'mission_intro':
+                return <MissionIntroScreen onComplete={() => setView('tasks')} />;
             case 'tasks':
                 if (!selectedMission) { setView('missions'); return null; }
                 const currentMissionState = journeys.flatMap(j => j.missions).find(m => m.id === selectedMission.id) || selectedMission;
@@ -385,28 +472,28 @@ const App: React.FC = () => {
             setView('game_over');
         }
     }, [playerStats.lives]);
-
+// Fix: Reconstruct the return statement to fix UI bug and add missing export.
     return (
         <main className="bg-gray-900 text-white min-h-screen">
-             {journeys.length === 0 ? (
-                 <div className="absolute inset-0 flex items-center justify-center">
-                    <h1 className="text-5xl font-bold text-yellow-400 animate-fade-in">Missão de Estudo</h1>
+             {journeys.length === 0 && view !== 'motivational' ? (
+                 <div className="text-center pt-8">
+                    <h1 className="text-5xl font-bold text-yellow-400">Study Journey</h1>
                  </div>
              ) : (
-                view !== 'game_over' && <PlayerStats stats={playerStats} levelUpScore={levelUpScore} onChangeCourse={handleChangeCourse} />
+                 <PlayerStats stats={playerStats} levelUpScore={levelUpScore} onChangeCourse={handleChangeCourse} />
              )}
-             
-             <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-                 {renderContent()}
-             </div>
+            
+            <CharacterGuide message={characterMessage} isVisible={isCharacterVisible} state={characterState} />
 
-             {showSaveNotification && (
-                <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-gray-800 text-yellow-300 px-4 py-2 rounded-lg shadow-lg z-50 animate-save-notification">
-                    Progresso Salvo!
+            <div className="container mx-auto px-4 py-8">
+                {renderContent()}
+            </div>
+
+            {showSaveNotification && (
+                <div className="fixed bottom-4 left-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out">
+                    Progresso salvo!
                 </div>
             )}
-             
-             <CharacterGuide message={characterMessage} isVisible={isCharacterVisible} state={characterState} />
         </main>
     );
 };
