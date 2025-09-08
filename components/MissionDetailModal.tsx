@@ -1,6 +1,8 @@
+
 import React, { useState, useRef, useLayoutEffect } from 'react';
 import { Mission, Task, CharacterState } from '../types';
 import { CharacterSVG } from './CharacterGuide';
+import { playSound, SoundEffect } from '../services/soundService';
 
 interface TaskViewProps {
   mission: Mission;
@@ -155,6 +157,7 @@ export const TaskView: React.FC<TaskViewProps> = ({ mission, onBack, onTaskCheck
 
   const handleTaskClick = (task: Task) => {
     if (animatingTask || task.isCompleted) return;
+    playSound(SoundEffect.TaskComplete);
     const element = taskRefs.current.get(task.id);
     if (element) {
       setAnimatingTask({ id: task.id, element });
@@ -163,11 +166,21 @@ export const TaskView: React.FC<TaskViewProps> = ({ mission, onBack, onTaskCheck
     }
   };
 
+  const handleBack = () => {
+    playSound(SoundEffect.ButtonClick);
+    onBack();
+  }
+
+  const handleStartQuiz = () => {
+    playSound(SoundEffect.ButtonClick);
+    onStartQuiz();
+  }
+
   return (
     <div className="animate-fade-in w-full flex items-center justify-center min-h-[75vh]">
         <div className="w-full max-w-4xl">
             <button
-                onClick={onBack}
+                onClick={handleBack}
                 className="mb-4 text-sm text-yellow-400 hover:text-yellow-200 bg-gray-800/70 px-4 py-2 rounded-md border border-yellow-500/30 hover:border-yellow-500/50 transition-all shadow-md"
             >
                 &larr; Voltar para o Castelo
@@ -196,7 +209,7 @@ export const TaskView: React.FC<TaskViewProps> = ({ mission, onBack, onTaskCheck
                     {allTasksCompleted && (
                         <div className="mt-10 text-center animate-fade-in-up">
                             <button
-                                onClick={onStartQuiz}
+                                onClick={handleStartQuiz}
                                 className="px-8 py-4 bg-yellow-500 text-gray-900 font-bold rounded-lg hover:bg-yellow-600 transition-all duration-300 transform hover:scale-105 animate-pulse-strong border-2 border-yellow-700/50 shadow-lg"
                             >
                                 Enfrentar o Desafio Final

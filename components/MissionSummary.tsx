@@ -1,5 +1,7 @@
+
 import React from 'react';
 import { CharacterSVG } from './CharacterGuide';
+import { playSound, SoundEffect } from '../services/soundService';
 
 interface MissionSummaryProps {
   missionTitle: string;
@@ -8,6 +10,11 @@ interface MissionSummaryProps {
 }
 
 export const MissionSummary: React.FC<MissionSummaryProps> = ({ missionTitle, summary, onFinish }) => {
+  const handleFinish = () => {
+    playSound(SoundEffect.ButtonClick);
+    onFinish();
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 animate-fade-in-up -mt-20">
       <div className="bg-gray-800 border border-yellow-500/50 rounded-lg shadow-2xl shadow-yellow-500/10 w-full max-w-3xl text-center p-8">
@@ -22,7 +29,7 @@ export const MissionSummary: React.FC<MissionSummaryProps> = ({ missionTitle, su
         </div>
         
         <button
-          onClick={onFinish}
+          onClick={handleFinish}
           className="px-8 py-4 bg-yellow-500 text-gray-900 font-bold rounded-lg hover:bg-yellow-600 transition-all duration-300 transform hover:scale-105 animate-pulse-strong"
         >
           Finalizar e Avançar

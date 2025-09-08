@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Journey, Mission, Task, Quiz, PlayerStats as PlayerStatsType, CharacterState, AppView, MissionStatus } from './types';
 import { WelcomeScreen } from './components/WelcomeScreen';
@@ -9,6 +10,7 @@ import { PlayerStats } from './components/PlayerStats';
 import { CharacterGuide, CharacterSVG } from './components/CharacterGuide';
 import { MissionSummary } from './components/MissionSummary';
 import { generateQuizFromTitles, generateMissionSummary } from './services/geminiService';
+import { playSound, preloadSounds, SoundEffect } from './services/soundService';
 
 const STORAGE_KEY = 'studyJourneyProgress';
 const INITIAL_STATS: PlayerStatsType = { score: 0, level: 1, lives: 3 };
@@ -54,6 +56,11 @@ const MotivationalScreen: React.FC<MotivationalScreenProps> = ({ onComplete }) =
         return () => clearInterval(typingInterval);
     }, [message]);
 
+    const handleComplete = () => {
+        playSound(SoundEffect.ButtonClick);
+        onComplete();
+    };
+
     return (
         <div className="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center text-center p-8 animate-fade-in">
             <h1 className="font-mono text-2xl md:text-3xl text-gray-200 leading-relaxed max-w-3xl">
@@ -62,7 +69,7 @@ const MotivationalScreen: React.FC<MotivationalScreenProps> = ({ onComplete }) =
             </h1>
             {isTypingComplete && (
                 <button
-                    onClick={onComplete}
+                    onClick={handleComplete}
                     className="mt-20 px-8 py-4 bg-yellow-500 text-gray-900 font-bold rounded-lg hover:bg-yellow-600 transition-all duration-300 transform hover:scale-105 animate-fade-in-up"
                 >
                     Aceitar Desafio
@@ -108,6 +115,23 @@ const App: React.FC = () => {
 
     const SCORE_PER_QUIZ = 100;
     const SCORE_TO_LEVEL_UP = 500;
+
+    // Preload sounds on the first user interaction
+    useEffect(() => {
+        const initAudio = () => {
+          preloadSounds();
+          window.removeEventListener('mousedown', initAudio);
+          window.removeEventListener('touchstart', initAudio);
+        };
+    
+        window.addEventListener('mousedown', initAudio);
+        window.addEventListener('touchstart', initAudio);
+    
+        return () => {
+          window.removeEventListener('mousedown', initAudio);
+          window.removeEventListener('touchstart', initAudio);
+        };
+    }, []);
 
     const saveProgress = (journeysToSave: Journey[], statsToSave: PlayerStatsType) => {
         try {
@@ -332,6 +356,7 @@ const App: React.FC = () => {
         setActiveQuiz(null); 
 
         if (isCorrect) {
+            playSound(SoundEffect.CorrectAnswer);
             setIsLoading(true);
             
             const newScore = playerStats.score + SCORE_PER_QUIZ;
@@ -340,6 +365,7 @@ const App: React.FC = () => {
             setPlayerStats(newStats);
 
             if (newLevel > playerStats.level) {
+                 playSound(SoundEffect.LevelUp);
                  showCharacterMessage(`Subiu de nível! Você alcançou o nível ${newLevel}!`, 'success', 6000);
             } else {
                 showCharacterMessage("Resposta correta! Sua sabedoria cresce.", 'success');
@@ -353,7 +379,11 @@ const App: React.FC = () => {
             setView('summary');
 
         } else {
+             playSound(SoundEffect.IncorrectAnswer);
              const newStats = { ...playerStats, lives: Math.max(0, playerStats.lives - 1) };
+             if (newStats.lives < playerStats.lives) {
+                playSound(SoundEffect.LoseLife);
+             }
              setPlayerStats(newStats);
              saveProgress(journeys, newStats);
             showCharacterMessage("Incorreto. Mas não desanime, cada erro é uma lição.", 'fail');
@@ -402,6 +432,7 @@ const App: React.FC = () => {
     }, [journeys, selectedJourney]);
 
     const handleRetryFromGameOver = () => {
+        playSound(SoundEffect.ButtonClick);
         const newStats = { ...playerStats, lives: INITIAL_STATS.lives };
         setPlayerStats(newStats);
         saveProgress(journeys, newStats);

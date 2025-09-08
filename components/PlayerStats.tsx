@@ -1,5 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { PlayerStats as PlayerStatsType } from '../types';
+import { playSound, SoundEffect } from '../services/soundService';
 
 interface PlayerStatsProps {
   stats: PlayerStatsType;
@@ -45,6 +47,11 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({ stats, levelUpScore, o
       }
   }, [stats.level, prevLevel]);
 
+  const handleChangeCourse = () => {
+    playSound(SoundEffect.ButtonClick);
+    onChangeCourse();
+  };
+
   return (
     <div className="fixed top-4 right-4 z-20 bg-gray-900/70 backdrop-blur-sm border border-yellow-500/30 p-1.5 rounded-xl shadow-lg animate-fade-in w-52">
       {/* Top Row: Level and Character Info */}
@@ -57,7 +64,7 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({ stats, levelUpScore, o
               <div className="flex items-center justify-between">
                   <h3 className="font-bold text-white text-sm">Herói do Código</h3>
                   <button 
-                      onClick={onChangeCourse} 
+                      onClick={handleChangeCourse} 
                       title="Trocar de Curso"
                       className="p-1 text-gray-400 hover:text-yellow-400 transition-colors duration-200 rounded-full hover:bg-gray-700/50"
                   >

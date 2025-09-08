@@ -1,6 +1,8 @@
+
 import React, { useRef, useState } from 'react';
 import { CharacterState } from '../types';
 import { CharacterSVG } from './CharacterGuide';
+import { playSound, SoundEffect } from '../services/soundService';
 
 interface WelcomeScreenProps {
   onFilesSelected: (files: File[]) => void;
@@ -13,6 +15,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onFilesSelected, i
 
   const handleFolderSelectClick = () => {
     if (isLoading) return;
+    playSound(SoundEffect.ButtonClick);
     setCharState('salute');
     fileInputRef.current?.click();
     // Reset state after a bit, in case user cancels file selection

@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import { Journey, Mission, CharacterState } from '../types';
 import { CharacterSVG } from './CharacterGuide';
+import { playSound, SoundEffect } from '../services/soundService';
 
 const LockIcon = () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-8 h-8 text-gray-400"><path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" /></svg>;
 const CheckIcon = () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-teal-300"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.052-.143Z" clipRule="evenodd" /></svg>;
@@ -99,12 +101,17 @@ const DoorNode: React.FC<{ mission: Mission; onSelect: () => void; nodeRef: Reac
         completed: "opacity-70"
     };
 
+    const handleSelect = () => {
+        playSound(SoundEffect.ButtonClick);
+        onSelect();
+    }
+
     return (
         <div className="relative flex-shrink-0">
              <div className="absolute -left-8 bottom-0 z-10 pointer-events-none">
                  <Guard status={mission.status === 'completed' ? 'defeated' : 'idle'} index={index} />
              </div>
-            <button ref={nodeRef} className={`${baseClasses} ${statusClasses[mission.status]} ${isOpening ? 'door-open' : ''}`} onClick={mission.status !== 'locked' ? onSelect : undefined} disabled={mission.status === 'locked'}>
+            <button ref={nodeRef} className={`${baseClasses} ${statusClasses[mission.status]} ${isOpening ? 'door-open' : ''}`} onClick={mission.status !== 'locked' ? handleSelect : undefined} disabled={mission.status === 'locked'}>
                 <div className="absolute top-0 w-full text-center p-1 bg-[#4a3f35] rounded-t-md border-b-2 border-black/20 shadow-md z-10">
                     <h3 className={`font-bold text-sm ${mission.status === 'unlocked' ? 'text-yellow-200' : 'text-gray-400'}`}>{mission.title}</h3>
                 </div>
@@ -143,11 +150,16 @@ const ExitDoor: React.FC<{ isUnlocked: boolean; isSinking: boolean; onClick: () 
     const statusClasses = isUnlocked
         ? 'hover:scale-105 cursor-pointer'
         : 'filter grayscale cursor-not-allowed opacity-60';
+    
+    const handleClick = () => {
+        playSound(SoundEffect.ButtonClick);
+        onClick();
+    }
 
     return (
         <button 
             ref={nodeRef}
-            onClick={onClick} 
+            onClick={handleClick} 
             disabled={!isUnlocked}
             className={`relative group flex flex-col items-center transition-transform duration-300 w-48 h-60 ${statusClasses}`}
         >
@@ -490,11 +502,15 @@ export const MissionMap: React.FC<MissionMapProps> = ({ journey, onBack, onMissi
     }, travelTime);
   };
 
+  const handleBack = () => {
+    playSound(SoundEffect.ButtonClick);
+    onBack();
+  }
 
   return (
     <div className="animate-fade-in w-full">
       <button
-        onClick={onBack}
+        onClick={handleBack}
         className="mb-4 z-30 text-sm text-yellow-400 hover:text-yellow-200 bg-gray-800/70 px-4 py-2 rounded-md border border-yellow-500/30 hover:border-yellow-500/50 transition-all shadow-md"
       >
         &larr; Voltar para o Mapa

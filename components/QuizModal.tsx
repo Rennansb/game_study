@@ -1,5 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Quiz } from '../types';
+import { playSound, SoundEffect } from '../services/soundService';
 
 interface QuizViewProps {
   quiz: Quiz | null;
@@ -34,11 +36,17 @@ export const QuizView: React.FC<QuizViewProps> = ({ quiz, missionTitle, isLoadin
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedAnswer) {
+      playSound(SoundEffect.ButtonClick);
       setIsSubmitted(true);
       setTimeout(() => {
         onSubmit(selectedAnswer);
       }, 2000); // Wait 2s to show feedback before closing
     }
+  };
+
+  const handleCancel = () => {
+    playSound(SoundEffect.ButtonClick);
+    onCancel();
   };
 
   const getOptionClass = (option: string) => {
@@ -97,7 +105,7 @@ export const QuizView: React.FC<QuizViewProps> = ({ quiz, missionTitle, isLoadin
           <div className="p-4 flex justify-center items-center space-x-4">
             <button
               type="button"
-              onClick={onCancel}
+              onClick={handleCancel}
               disabled={isSubmitted}
               className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white disabled:opacity-50"
             >
