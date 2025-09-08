@@ -30,9 +30,10 @@ const CheckAnimation: React.FC<{ taskElement: HTMLElement }> = ({ taskElement })
     const checkboxRect = checkbox.getBoundingClientRect();
     
     // --- Character Positioning ---
+    const characterWidth = 80;
     const initialLeft = taskTextRect.right - containerRect.left;
-    const initialTop = taskTextRect.top - containerRect.top + (taskTextRect.height / 2) - 40;
-    const finalLeft = checkboxRect.left - containerRect.left - 80;
+    const initialTop = taskTextRect.top - containerRect.top + (taskTextRect.height / 2) - (characterWidth / 2);
+    const finalLeft = checkboxRect.left - containerRect.left - characterWidth - 20;
 
     // --- Slash Path Calculation ---
     const startX = taskTextRect.left - containerRect.left - 10;
@@ -54,7 +55,7 @@ const CheckAnimation: React.FC<{ taskElement: HTMLElement }> = ({ taskElement })
         top: `${initialTop}px`,
         left: `${initialLeft}px`,
         opacity: 0,
-        transform: 'scale(1.2) scaleX(-1)', // Flipped to face left
+        transform: 'scaleX(-1)', // Flipped to face left
         zIndex: 50,
     });
     
@@ -97,7 +98,7 @@ const CheckAnimation: React.FC<{ taskElement: HTMLElement }> = ({ taskElement })
   return (
     <>
       <div style={charStyle}>
-        <CharacterSVG charState={phase === 'success' ? 'success' : 'idle'} className={phase === 'slashing' ? 'character-slashing' : ''} />
+        <CharacterSVG charState={phase === 'success' ? 'success' : phase === 'slashing' ? 'slashing' : 'moving'} />
       </div>
       
       <svg className="absolute top-0 left-0 w-full h-full pointer-events-none z-40" style={{ opacity: isSlashVisible ? 1 : 0 }}>
@@ -109,7 +110,7 @@ const CheckAnimation: React.FC<{ taskElement: HTMLElement }> = ({ taskElement })
             strokeLinecap="round"
             strokeDasharray={slashPath.length}
             strokeDashoffset={slashPath.length}
-            style={{ animation: isSlashVisible ? `draw-slash-path 0.4s ease-out 0.1s forwards` : 'none' }}
+            style={{ animation: isSlashVisible ? `draw-slash-path 0.4s cubic-bezier(0.65, 0, 0.35, 1) 0.1s forwards` : 'none' }}
         />
         <defs>
             <linearGradient id="slash-gradient">

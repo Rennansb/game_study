@@ -34,5 +34,6 @@ export interface PlayerStats {
   lives: number;
 }
 
-export type CharacterState = 'idle' | 'thinking' | 'success' | 'fail' | 'moving' | 'salute';
+// FIX: Added 'slashing' to CharacterState to support the slash animation in MissionDetailModal.tsx.
+export type CharacterState = 'idle' | 'thinking' | 'success' | 'fail' | 'moving' | 'salute' | 'slashing';
 export type AppView = 'journeys' | 'missions' | 'tasks' | 'quiz' | 'summary' | 'game_over' | 'motivational' | 'mission_intro';
