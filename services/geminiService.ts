@@ -1,7 +1,19 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Quiz } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+let ai: GoogleGenAI | null = null;
+
+const getAiClient = (): GoogleGenAI => {
+    if (ai) {
+        return ai;
+    }
+    if (!process.env.API_KEY) {
+        console.error("Gemini API key is not configured. Please set the API_KEY environment variable.");
+        throw new Error("API_KEY_MISSING");
+    }
+    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    return ai;
+};
 
 const quizSchema = {
     type: Type.OBJECT,
@@ -19,6 +31,7 @@ const quizSchema = {
 
 export const generateQuizFromTitles = async (journeyTitle: string, missionTitle: string, taskTitles: string[]): Promise<Quiz | null> => {
     try {
+        const aiClient = getAiClient();
         const prompt = `
             Você é um criador de quizzes para um estudante de programação.
             Crie um quiz desafiador para avaliar o conhecimento do usuário sobre a missão "${missionTitle}", que faz parte da jornada de estudos "${journeyTitle}".
@@ -31,7 +44,7 @@ export const generateQuizFromTitles = async (journeyTitle: string, missionTitle:
             Não inclua a formatação markdown 'json' no início ou no fim da sua resposta.
         `;
 
-        const response = await ai.models.generateContent({
+        const response = await aiClient.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,
             config: {
@@ -53,6 +66,9 @@ export const generateQuizFromTitles = async (journeyTitle: string, missionTitle:
             return null;
         }
     } catch (error) {
+        if (error instanceof Error && error.message === "API_KEY_MISSING") {
+            throw error; // Re-throw for the UI to handle
+        }
         console.error("Error generating quiz with Gemini API:", error);
         return null;
     }
@@ -60,6 +76,7 @@ export const generateQuizFromTitles = async (journeyTitle: string, missionTitle:
 
 export const generateMissionSummary = async (journeyTitle: string, missionTitle: string, taskTitles: string[]): Promise<string> => {
     try {
+        const aiClient = getAiClient();
         const prompt = `
             Você é um tutor de programação experiente e amigável.
             Baseado na jornada de estudos '${journeyTitle}', na missão '${missionTitle}', e nas tarefas concluídas (${taskTitles.join(', ')}), gere um resumo conciso e encorajador em português do Brasil.
@@ -73,7 +90,7 @@ export const generateMissionSummary = async (journeyTitle: string, missionTitle:
             Não inclua a formatação markdown. A resposta deve ser um texto simples.
         `;
 
-        const response = await ai.models.generateContent({
+        const response = await aiClient.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,
         });
@@ -81,6 +98,9 @@ export const generateMissionSummary = async (journeyTitle: string, missionTitle:
         return response.text;
 
     } catch (error) {
+        if (error instanceof Error && error.message === "API_KEY_MISSING") {
+            throw error; // Re-throw for the UI to handle
+        }
         console.error("Error generating mission summary with Gemini API:", error);
         return "Não foi possível gerar o resumo da missão. Mas parabéns por completá-la! Continue assim.";
     }

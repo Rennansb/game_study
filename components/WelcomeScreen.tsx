@@ -1,5 +1,5 @@
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { CharacterState } from '../types';
 import { CharacterSVG } from './CharacterGuide';
 import { playSound, SoundEffect } from '../services/soundService';
@@ -7,16 +7,26 @@ import { playSound, SoundEffect } from '../services/soundService';
 interface WelcomeScreenProps {
   onFilesSelected: (files: File[]) => void;
   isLoading: boolean;
+  showCharacterMessage: (message: string, state?: CharacterState, duration?: number) => void;
 }
 
-export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onFilesSelected, isLoading }) => {
+export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onFilesSelected, isLoading, showCharacterMessage }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [charState, setCharState] = useState<CharacterState>('idle');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+        showCharacterMessage("Saudações, Herói do Código! Para começar, clique em 'Iniciar Jornada' e selecione a pasta com seus materiais de estudo.", 'salute', 10000);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [showCharacterMessage]);
+
 
   const handleFolderSelectClick = () => {
     if (isLoading) return;
     playSound(SoundEffect.ButtonClick);
     setCharState('salute');
+    showCharacterMessage("Excelente! Escolha sua pasta de conhecimento.", 'salute', 5000);
     fileInputRef.current?.click();
     // Reset state after a bit, in case user cancels file selection
     setTimeout(() => setCharState('idle'), 1500);
@@ -26,6 +36,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onFilesSelected, i
     const selectedFiles = event.target.files;
     if (!selectedFiles || selectedFiles.length === 0) {
       setCharState('idle'); // User cancelled
+      showCharacterMessage("Parece que você mudou de ideia. Estarei aqui quando estiver pronto!", 'idle', 5000);
       return;
     }
     onFilesSelected(Array.from(selectedFiles));
@@ -34,8 +45,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onFilesSelected, i
   React.useEffect(() => {
       if (isLoading) {
           setCharState('thinking');
+          showCharacterMessage("Estou analisando os pergaminhos... Dando uma olhada na estrutura dos seus estudos.", 'thinking', 8000);
       }
-  }, [isLoading]);
+  }, [isLoading, showCharacterMessage]);
 
   return (
     <div className="relative flex flex-col items-center justify-center min-h-[calc(100vh-80px)] w-full overflow-hidden animate-fade-in text-center">

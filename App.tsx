@@ -147,6 +147,15 @@ const App: React.FC = () => {
         }
     };
 
+    const showCharacterMessage = useCallback((message: string, state: CharacterState = 'idle', duration: number = 5000) => {
+        setCharacterMessage(message);
+        setCharacterState(state);
+        setIsCharacterVisible(true);
+        const timer = setTimeout(() => setIsCharacterVisible(false), duration);
+        return () => clearTimeout(timer);
+    }, []);
+
+
     useEffect(() => {
         try {
             const savedData = localStorage.getItem(STORAGE_KEY);
@@ -162,15 +171,7 @@ const App: React.FC = () => {
             console.error("Failed to load progress:", error);
             localStorage.removeItem(STORAGE_KEY);
         }
-    }, []);
-
-    const showCharacterMessage = (message: string, state: CharacterState = 'idle', duration: number = 5000) => {
-        setCharacterMessage(message);
-        setCharacterState(state);
-        setIsCharacterVisible(true);
-        const timer = setTimeout(() => setIsCharacterVisible(false), duration);
-        return () => clearTimeout(timer);
-    };
+    }, [showCharacterMessage]);
 
     const processFiles = (files: File[]): Journey[] => {
         const journeyMap: { [key: string]: { missions: { [key: string]: Mission } } } = {};
@@ -301,15 +302,25 @@ const App: React.FC = () => {
         }
 
         const taskTitles = mission.tasks.map(t => t.name);
-        const quiz = await generateQuizFromTitles(journey.title, mission.title, taskTitles);
-        
-        if (quiz) {
-            setActiveQuiz(quiz);
-        } else {
-            showCharacterMessage("Não foi possível criar o desafio. Tente novamente.", 'fail');
+        try {
+            const quiz = await generateQuizFromTitles(journey.title, mission.title, taskTitles);
+            
+            if (quiz) {
+                setActiveQuiz(quiz);
+            } else {
+                showCharacterMessage("Não foi possível criar o desafio. Tente novamente.", 'fail');
+                setView('tasks'); // Go back
+            }
+        } catch (error) {
+             if (error instanceof Error && error.message === 'API_KEY_MISSING') {
+                showCharacterMessage("Erro de Configuração: A chave da API Gemini não foi encontrada. O administrador precisa configurar a API_KEY para gerar quizzes.", 'fail', 30000);
+            } else {
+                showCharacterMessage("Ocorreu um erro ao criar o desafio. Tente novamente mais tarde.", 'fail');
+            }
             setView('tasks'); // Go back
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
     
     const updateProgression = (currentJourneys: Journey[], completedMissionId: string): { updatedJourneys: Journey[], nextMissionToStart: Mission | null } => {
@@ -373,10 +384,20 @@ const App: React.FC = () => {
             
             const journey = journeys.find(j => j.id === missionForQuiz.id.split('/')[0]);
             const taskTitles = missionForQuiz.tasks.map(t => t.name);
-            const summary = await generateMissionSummary(journey?.title || '', missionForQuiz.title, taskTitles);
-            setMissionSummary(summary);
-            setIsLoading(false);
-            setView('summary');
+            
+            try {
+                const summary = await generateMissionSummary(journey?.title || '', missionForQuiz.title, taskTitles);
+                setMissionSummary(summary);
+            } catch (error) {
+                if (error instanceof Error && error.message === 'API_KEY_MISSING') {
+                    showCharacterMessage("Configuração de API ausente. Não foi possível gerar o resumo, mas seu progresso foi salvo!", 'fail', 10000);
+                }
+                // Use a fallback summary if generation fails for any reason
+                setMissionSummary("Parabéns por completar a missão! Seus conhecimentos foram validados. Continue para o próximo desafio.");
+            } finally {
+                setIsLoading(false);
+                setView('summary');
+            }
 
         } else {
              playSound(SoundEffect.IncorrectAnswer);
@@ -429,7 +450,7 @@ const App: React.FC = () => {
                 showCharacterMessage(`Ótimo! O próximo desafio, "${nextMission.title}", está liberado. Clique nele para começar!`, 'idle', 7000);
             }
         }
-    }, [journeys, selectedJourney]);
+    }, [journeys, selectedJourney, showCharacterMessage]);
 
     const handleRetryFromGameOver = () => {
         playSound(SoundEffect.ButtonClick);
@@ -443,7 +464,7 @@ const App: React.FC = () => {
 
     const renderContent = () => {
         if (journeys.length === 0) {
-            return <WelcomeScreen onFilesSelected={handleFilesSelected} isLoading={isLoading} />;
+            return <WelcomeScreen onFilesSelected={handleFilesSelected} isLoading={isLoading} showCharacterMessage={showCharacterMessage} />;
         }
         switch(view) {
             case 'journeys':
@@ -527,9 +548,7 @@ const App: React.FC = () => {
                  <PlayerStats stats={playerStats} levelUpScore={levelUpScore} onChangeCourse={handleChangeCourse} />
              )}
             
-            {journeys.length > 0 && (
-                <CharacterGuide message={characterMessage} isVisible={isCharacterVisible} state={characterState} />
-            )}
+            <CharacterGuide message={characterMessage} isVisible={isCharacterVisible} state={characterState} />
 
             <div className="container mx-auto px-4 py-8">
                 {renderContent()}
